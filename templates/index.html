@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile.name }} - Data Analyst Portfolio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">{{ profile.name }}</div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">{{ profile.name }}</h1>
+                    <p class="hero-subtitle">{{ profile.title }}</p>
+                    <p class="hero-location">📍 {{ profile.location }}</p>
+                    <div class="hero-buttons">
+                        <a href="#contact" class="btn btn-primary">Get In Touch</a>
+                        <a href="{{ url_for('download_resume') }}" class="btn btn-secondary">Download Resume</a>
+                    </div>
+                    <div class="hero-social">
+                        <a href="mailto:{{ profile.email }}" class="social-link" title="Email">📧</a>
+                        <a href="{{ profile.linkedin }}" target="_blank" rel="noopener" class="social-link" title="LinkedIn">🔗</a>
+                    </div>
+                </div>
+                {% if profile.image %}
+                <div class="hero-image">
+                    <img src="{{ url_for('static', filename='../' + profile.image) }}" alt="{{ profile.name }}" onerror="this.style.display='none'">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">About Me</h2>
+            <div class="about-content">
+                <p class="about-text">{{ profile.summary }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impact Snapshot -->
+    <section class="impact">
+        <div class="container">
+            <h2 class="section-title">Impact Snapshot</h2>
+            <div class="impact-grid">
+                <div class="impact-card">
+                    <div class="impact-number">144k+</div>
+                    <div class="impact-label">Records Analyzed</div>
+                </div>
+                <div class="impact-card">
+                    <div class="impact-number">10+</div>
+                    <div class="impact-label">Power BI Dashboards</div>
+                </div>
+                <div class="impact-card">
+                    <div class="impact-number">95%</div>
+                    <div class="impact-label">Face Recognition Accuracy</div>
+                </div>
+                <div class="impact-card">
+                    <div class="impact-number">80%</div>
+                    <div class="impact-label">Manual Effort Reduced</div>
+                </div>
+                <div class="impact-card">
+                    <div class="impact-number">88%</div>
+                    <div class="impact-label">Forecasting Accuracy</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="skills">
+        <div class="container">
+            <h2 class="section-title">Technical Skills</h2>
+            <div class="skills-grid">
+                {% for category, skill_list in skills.items() %}
+                <div class="skill-category">
+                    <h3 class="skill-category-title">{{ category }}</h3>
+                    <div class="skill-tags">
+                        {% for skill in skill_list %}
+                        <span class="skill-tag">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <h2 class="section-title">Services</h2>
+            <div class="services-grid">
+                {% for service in services %}
+                <div class="service-card">
+                    <div class="service-icon">{{ service.icon }}</div>
+                    <h3 class="service-title">{{ service.title }}</h3>
+                    <p class="service-description">{{ service.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="projects">
+        <div class="container">
+            <h2 class="section-title">Featured Projects</h2>
+            <div class="projects-grid">
+                {% for project in projects %}
+                <div class="project-card">
+                    {% if project.image_path %}
+                    <div class="project-image">
+                        <img src="{{ url_for('static', filename='../' + project.image_path) }}" alt="{{ project.title }}">
+                    </div>
+                    {% endif %}
+                    <div class="project-content">
+                        <h3 class="project-title">{{ project.title }}</h3>
+                        <p class="project-description">{{ project.description }}</p>
+                        
+                        {% if project.tools %}
+                        <div class="project-tools">
+                            <strong>Tools:</strong> {{ project.tools }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if project.results %}
+                        <div class="project-results">
+                            <strong>Results:</strong>
+                            <ul>
+                                {% for result in project.results.split(',') %}
+                                <li>{{ result.strip() }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="project-links">
+                            {% if project.github_link %}
+                            <a href="{{ project.github_link }}" target="_blank" rel="noopener" class="project-link">GitHub</a>
+                            {% endif %}
+                            {% if project.linkedin_link %}
+                            <a href="{{ project.linkedin_link }}" target="_blank" rel="noopener" class="project-link">LinkedIn</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience Section -->
+    <section id="experience" class="experience">
+        <div class="container">
+            <h2 class="section-title">Defence Experience</h2>
+            {% for exp in experience %}
+            <div class="experience-card">
+                <div class="experience-header">
+                    <h3 class="experience-org">{{ exp.organization }}</h3>
+                    {% if exp.role %}
+                    <p class="experience-role">{{ exp.role }}</p>
+                    {% endif %}
+                </div>
+                <p class="experience-description">{{ exp.description }}</p>
+                {% if exp.certificate_path %}
+                <div class="experience-certificate">
+                    <img src="{{ url_for('static', filename='../' + exp.certificate_path) }}" alt="Certificate">
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Certifications Section -->
+    <section class="certifications">
+        <div class="container">
+            <h2 class="section-title">Certifications & Achievements</h2>
+            <div class="certifications-grid">
+                {% for cert in certifications %}
+                <div class="cert-card">
+                    <h3 class="cert-title">{{ cert.title }}</h3>
+                    {% if cert.issuer %}
+                    <p class="cert-issuer">{{ cert.issuer }}</p>
+                    {% endif %}
+                    {% if cert.date_earned %}
+                    <p class="cert-date">{{ cert.date_earned }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Get In Touch</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3>Let's Connect</h3>
+                    <p>I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.</p>
+                    <div class="contact-details">
+                        <p><strong>Email:</strong> <a href="mailto:{{ profile.email }}">{{ profile.email }}</a></p>
+                        <p><strong>LinkedIn:</strong> <a href="{{ profile.linkedin }}" target="_blank" rel="noopener">View Profile</a></p>
+                        <p><strong>Location:</strong> {{ profile.location }}</p>
+                    </div>
+                </div>
+                
+                <form class="contact-form" action="{{ url_for('contact') }}" method="POST">
+                    <div class="form-group">
+                        <label for="name">Name *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Message *</label>
+                        <textarea id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 {{ profile.name }}. Built with Python & Flask.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
