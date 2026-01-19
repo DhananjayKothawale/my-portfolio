@@ -11,6 +11,7 @@ from functools import wraps
 import sqlite3
 import os
 import smtplib
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
@@ -193,6 +194,10 @@ def get_setting(key, default=''):
 
 # Email notification function
 def send_email_notification(name, email, message):
+    print("DEBUG EMAIL_USER:", os.environ.get("EMAIL_USER"))
+    print("DEBUG EMAIL_PASSWORD:", os.environ.get("EMAIL_PASSWORD"))
+    print("DEBUG NOTIFICATION_EMAIL:", os.environ.get("NOTIFICATION_EMAIL"))
+
     """Send email notification when contact form is submitted"""
     try:
         # Get email configuration from environment variables
@@ -363,7 +368,12 @@ def contact():
     conn.close()
     
     # Send email notification (non-blocking - won't fail if email not configured)
-    send_email_notification(name, email, message)
+    threading.Thread(
+    target=send_email_notification,
+    args=(name, email, message),
+    daemon=True
+    ).start()
+
     
     flash('Thank you for your message! I will get back to you soon.', 'success')
     return redirect(url_for('index') + '#contact')
