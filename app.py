@@ -243,7 +243,7 @@ def send_email_notification(name, email, message):
                         </p>
                         <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;">
                             💼 View all messages in your 
-                            <a href="https://your-portfolio.onrender.com/admin" style="color: #64ffda;">Admin Panel</a>
+                            <a href="https://my-portfolio-gemk.onrender.com/admin/login" style="color: #64ffda;">Admin Panel</a>
                         </p>
                     </div>
                     
