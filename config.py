@@ -14,6 +14,12 @@ class Config:
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     ADMIN_PASSWORD = generate_password_hash(os.environ.get('ADMIN_PASSWORD') or 'admin123')
     
+    # Email configuration (OPTIONAL - for contact form notifications)
+    # If not set, contact form will still work but won't send email notifications
+    EMAIL_USER = os.environ.get('EMAIL_USER')   # Your Gmail address
+    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')  # Gmail App Password
+    NOTIFICATION_EMAIL = os.environ.get('NOTIFICATION_EMAIL', EMAIL_USER)   # Where to receive notifications
+    
     # File upload settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     UPLOAD_FOLDER = 'uploads'

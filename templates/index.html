@@ -45,7 +45,7 @@
                 </div>
                 {% if profile.image %}
                 <div class="hero-image">
-                    <img src="{{ url_for('static', filename='../' + profile.image) }}" alt="{{ profile.name }}" onerror="this.style.display='none'">
+                    <img src="{{ url_for('serve_uploads', filename=profile.image.replace('uploads/', '')) }}" alt="{{ profile.name }}" onerror="this.style.display='none'">
                 </div>
                 {% endif %}
             </div>
@@ -135,7 +135,7 @@
                 <div class="project-card">
                     {% if project.image_path %}
                     <div class="project-image">
-                        <img src="{{ url_for('static', filename='../' + project.image_path) }}" alt="{{ project.title }}">
+                        <img src="{{ url_for('serve_uploads', filename=project.image_path.replace('uploads/', '')) }}" alt="{{ project.title }}">
                     </div>
                     {% endif %}
                     <div class="project-content">
@@ -189,7 +189,7 @@
                 <p class="experience-description">{{ exp.description }}</p>
                 {% if exp.certificate_path %}
                 <div class="experience-certificate">
-                    <img src="{{ url_for('static', filename='../' + exp.certificate_path) }}" alt="Certificate">
+                    <img src="{{ url_for('serve_uploads', filename=exp.certificate_path.replace('uploads/', '')) }}" alt="Certificate">
                 </div>
                 {% endif %}
             </div>

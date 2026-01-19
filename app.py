@@ -4,12 +4,15 @@ Admin updates now show immediately on main page
 Author: Dhananjay Kothawale
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file,send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
 import sqlite3
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from config import Config
 
@@ -188,6 +191,88 @@ def get_setting(key, default=''):
     conn.close()
     return result[0] if result else default
 
+# Email notification function
+def send_email_notification(name, email, message):
+    """Send email notification when contact form is submitted"""
+    try:
+        # Get email configuration from environment variables
+        sender_email = os.environ.get('EMAIL_USER')
+        sender_password = os.environ.get('EMAIL_PASSWORD')
+        receiver_email = os.environ.get('NOTIFICATION_EMAIL', sender_email)
+        
+        # If email not configured, skip silently
+        if not sender_email or not sender_password:
+            print("Email not configured - skipping notification")
+            return False
+        
+        # Create email message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f'New Contact Form Submission from {name}'
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+        
+        # Create HTML email body
+        html = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #0a192f; border-bottom: 3px solid #64ffda; padding-bottom: 10px;">
+                        🎉 New Contact Form Message!
+                    </h2>
+                    
+                    <div style="margin: 20px 0;">
+                        <p style="color: #333; font-size: 16px; margin: 10px 0;">
+                            <strong style="color: #64ffda;">From:</strong> {name}
+                        </p>
+                        <p style="color: #333; font-size: 16px; margin: 10px 0;">
+                            <strong style="color: #64ffda;">Email:</strong> 
+                            <a href="mailto:{email}" style="color: #0a192f;">{email}</a>
+                        </p>
+                    </div>
+                    
+                    <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #64ffda; margin: 20px 0; border-radius: 5px;">
+                        <p style="color: #555; margin: 0; white-space: pre-wrap; line-height: 1.6;">
+                            <strong style="color: #0a192f;">Message:</strong><br><br>
+                            {message}
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                        <p style="color: #999; font-size: 12px; margin: 0;">
+                            📅 Received: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+                        </p>
+                        <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;">
+                            💼 View all messages in your 
+                            <a href="https://your-portfolio.onrender.com/admin" style="color: #64ffda;">Admin Panel</a>
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
+                        <p style="color: #2e7d32; margin: 0; font-size: 14px;">
+                            ✅ <strong>Quick Reply:</strong> Reply directly to this email to respond to {name}
+                        </p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        
+        # Attach HTML content
+        html_part = MIMEText(html, 'html')
+        msg.attach(html_part)
+        
+        # Send email using Gmail SMTP
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        
+        print(f"✅ Email notification sent to {receiver_email}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error sending email: {str(e)}")
+        return False
+
 # CRITICAL: Prevent browser caching of dynamic pages
 @app.after_request
 def add_no_cache(response):
@@ -243,7 +328,8 @@ def index():
         'email': get_setting('profile_email'),
         'linkedin': get_setting('profile_linkedin'),
         'summary': get_setting('profile_summary'),
-        'image': get_setting('profile_image')
+        'image': get_setting('profile_image').replace("\\", "/")
+
     }
     
     return render_template('index.html',
@@ -268,11 +354,15 @@ def contact():
         flash('Please enter a valid email address.', 'error')
         return redirect(url_for('index') + '#contact')
     
+    # Save to database
     conn = get_db()
     c = conn.cursor()
     c.execute("INSERT INTO messages (name, email, message) VALUES (?, ?, ?)", (name, email, message))
     conn.commit()
     conn.close()
+    
+    # Send email notification (non-blocking - won't fail if email not configured)
+    send_email_notification(name, email, message)
     
     flash('Thank you for your message! I will get back to you soon.', 'success')
     return redirect(url_for('index') + '#contact')
@@ -284,6 +374,12 @@ def download_resume():
         return send_file(resume_path, as_attachment=True, download_name='Dhananjay_Kothawale_Resume.pdf')
     flash('Resume file not found.', 'error')
     return redirect(url_for('index'))
+
+# Serve uploaded files (images, etc.)
+@app.route('/uploads/<filename>')
+def serve_uploads(filename):
+    """Serve files from uploads directory"""
+    return send_file(os.path.join('uploads', filename))
 
 # Admin routes
 @app.route('/admin/login', methods=['GET', 'POST'])
