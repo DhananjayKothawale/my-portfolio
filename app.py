@@ -252,7 +252,7 @@ Message:
                     "to": [{"email": receiver}],
                     "subject": subject
                 }],
-                "from": {"email": "no-reply@portfolio.com"},
+                "from": {"email": "dhananjaykothawale80@gmail.com"},
                 "content": [{
                     "type": "text/plain",
                     "value": body
