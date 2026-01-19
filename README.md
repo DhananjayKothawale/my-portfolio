@@ -143,21 +143,7 @@ The admin dashboard allows you to:
    - **Environment Variables**: Add `SECRET_KEY`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 4. Deploy!
 
-### Deploy to Railway
 
-1. Create a new project on [Railway](https://railway.app)
-2. Connect your GitHub repository
-3. Add environment variables
-4. Railway will auto-detect Flask and deploy
-
-### Environment Variables (Production)
-
-Set these in your deployment platform:
-
-```
-SECRET_KEY=<generate-random-32-char-string>
-ADMIN_USERNAME=<your-admin-username>
-ADMIN_PASSWORD=<your-strong-password>
 ```
 
 ## 📝 Content Management
@@ -264,5 +250,14 @@ For issues or questions:
 - Verify file paths and permissions
 
 ---
+🚀 To Deploy Changes to Render
+After testing locally:
+Step 1: Commit Changes
+
+
+**git add .
+git commit -m "Updated portfolio content
+git push**
+
 
 **Built with ❤️ using Flask, Python, and modern web technologies**
