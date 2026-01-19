@@ -25,11 +25,6 @@ instance/
 .env.local
 .env.production
 
-# Uploads (optional - you may want to track some uploads)
-uploads/*.jpg
-uploads/*.png
-uploads/*.pdf
-!uploads/.gitkeep
 
 # IDE
 .vscode/
