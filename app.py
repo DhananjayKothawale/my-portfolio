@@ -330,6 +330,7 @@ def index():
         'summary': get_setting('profile_summary'),
         'image': get_setting('profile_image').replace("\\", "/")
 
+
     }
     
     return render_template('index.html',
@@ -376,10 +377,10 @@ def download_resume():
     return redirect(url_for('index'))
 
 # Serve uploaded files (images, etc.)
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<path:filename>')
 def serve_uploads(filename):
-    """Serve files from uploads directory"""
-    return send_file(os.path.join('uploads', filename))
+    return send_from_directory('uploads', filename)
+
 
 # Admin routes
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -660,10 +661,16 @@ def update_settings():
     if 'profile_image' in request.files:
         file = request.files['profile_image']
         if file and file.filename and allowed_file(file.filename):
-            filename = 'profile.' + file.filename.rsplit('.', 1)[1].lower()
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"profile.{ext}"
             filepath = os.path.join('uploads', filename)
             file.save(filepath)
-            c.execute("UPDATE settings SET value = ? WHERE key = 'profile_image'", (filepath,))
+
+            c.execute(
+                "UPDATE settings SET value = ? WHERE key = 'profile_image'",
+                (f"uploads/{filename}",)
+            )
+
     
     # Handle resume upload
     if 'resume' in request.files:
