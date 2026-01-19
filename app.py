@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
 import sqlite3
+import requests
 import os
 import smtplib
 import threading
@@ -193,89 +194,82 @@ def get_setting(key, default=''):
     return result[0] if result else default
 
 # Email notification function
-def send_email_notification(name, email, message):
-    print("DEBUG EMAIL_USER:", os.environ.get("EMAIL_USER"))
-    print("DEBUG EMAIL_PASSWORD:", os.environ.get("EMAIL_PASSWORD"))
-    print("DEBUG NOTIFICATION_EMAIL:", os.environ.get("NOTIFICATION_EMAIL"))
 
-    """Send email notification when contact form is submitted"""
+def send_email_notification(name, email, message):
+
+    receiver = os.environ.get("NOTIFICATION_EMAIL")
+    subject = f"New Contact Form Submission from {name}"
+    body = f"""
+From: {name}
+Email: {email}
+
+Message:
+{message}
+"""
+
+    # =======================
+    # 1️⃣ TRY SMTP (LOCAL)
+    # =======================
     try:
-        # Get email configuration from environment variables
-        sender_email = os.environ.get('EMAIL_USER')
-        sender_password = os.environ.get('EMAIL_PASSWORD')
-        receiver_email = os.environ.get('NOTIFICATION_EMAIL', sender_email)
-        
-        # If email not configured, skip silently
-        if not sender_email or not sender_password:
-            print("Email not configured - skipping notification")
-            return False
-        
-        # Create email message
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f'New Contact Form Submission from {name}'
-        msg['From'] = sender_email
-        msg['To'] = receiver_email
-        
-        # Create HTML email body
-        html = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <h2 style="color: #0a192f; border-bottom: 3px solid #64ffda; padding-bottom: 10px;">
-                        🎉 New Contact Form Message!
-                    </h2>
-                    
-                    <div style="margin: 20px 0;">
-                        <p style="color: #333; font-size: 16px; margin: 10px 0;">
-                            <strong style="color: #64ffda;">From:</strong> {name}
-                        </p>
-                        <p style="color: #333; font-size: 16px; margin: 10px 0;">
-                            <strong style="color: #64ffda;">Email:</strong> 
-                            <a href="mailto:{email}" style="color: #0a192f;">{email}</a>
-                        </p>
-                    </div>
-                    
-                    <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #64ffda; margin: 20px 0; border-radius: 5px;">
-                        <p style="color: #555; margin: 0; white-space: pre-wrap; line-height: 1.6;">
-                            <strong style="color: #0a192f;">Message:</strong><br><br>
-                            {message}
-                        </p>
-                    </div>
-                    
-                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                        <p style="color: #999; font-size: 12px; margin: 0;">
-                            📅 Received: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
-                        </p>
-                        <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;">
-                            💼 View all messages in your 
-                            <a href="https://my-portfolio-gemk.onrender.com/admin/login" style="color: #64ffda;">Admin Panel</a>
-                        </p>
-                    </div>
-                    
-                    <div style="margin-top: 30px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
-                        <p style="color: #2e7d32; margin: 0; font-size: 14px;">
-                            ✅ <strong>Quick Reply:</strong> Reply directly to this email to respond to {name}
-                        </p>
-                    </div>
-                </div>
-            </body>
-        </html>
-        """
-        
-        # Attach HTML content
-        html_part = MIMEText(html, 'html')
-        msg.attach(html_part)
-        
-        # Send email using Gmail SMTP
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
-        
-        print(f"✅ Email notification sent to {receiver_email}")
-        return True
-        
+        sender_email = os.environ.get("EMAIL_USER")
+        sender_password = os.environ.get("EMAIL_PASSWORD")
+
+        if sender_email and sender_password:
+            msg = MIMEMultipart()
+            msg["From"] = sender_email
+            msg["To"] = receiver
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "plain"))
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+
+            print("✅ Email sent via SMTP")
+            return True
+
     except Exception as e:
-        print(f"❌ Error sending email: {str(e)}")
+        print("⚠ SMTP failed:", e)
+
+    # =======================
+    # 2️⃣ FALLBACK → SENDGRID
+    # =======================
+    try:
+        sg_key = os.environ.get("SENDGRID_API_KEY")
+
+        if not sg_key:
+            print("❌ SendGrid key missing")
+            return False
+
+        response = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers={
+                "Authorization": f"Bearer {sg_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "personalizations": [{
+                    "to": [{"email": receiver}],
+                    "subject": subject
+                }],
+                "from": {"email": "no-reply@portfolio.com"},
+                "content": [{
+                    "type": "text/plain",
+                    "value": body
+                }]
+            },
+            timeout=10
+        )
+
+        if response.status_code == 202:
+            print("✅ Email sent via SendGrid")
+            return True
+        else:
+            print("❌ SendGrid failed:", response.text)
+            return False
+
+    except Exception as e:
+        print("❌ SendGrid exception:", e)
         return False
 
 # CRITICAL: Prevent browser caching of dynamic pages
