@@ -196,47 +196,41 @@ def get_setting(key, default=''):
 # Email notification function
 
 def send_email_notification(name, email, message):
-
     receiver = os.environ.get("NOTIFICATION_EMAIL")
     subject = f"New Contact Form Submission from {name}"
-    body = f"""
-From: {name}
-Email: {email}
-
-Message:
-{message}
-"""
+    body = f"From: {name}\nEmail: {email}\n\nMessage:\n{message}"
 
     # =======================
-    # 1️⃣ TRY SMTP (LOCAL)
+    # LOCAL → SMTP ONLY
     # =======================
-    try:
-        sender_email = os.environ.get("EMAIL_USER")
-        sender_password = os.environ.get("EMAIL_PASSWORD")
+    if not os.environ.get("RENDER"):
+        try:
+            sender_email = os.environ.get("EMAIL_USER")
+            sender_password = os.environ.get("EMAIL_PASSWORD")
 
-        if sender_email and sender_password:
-            msg = MIMEMultipart()
-            msg["From"] = sender_email
-            msg["To"] = receiver
-            msg["Subject"] = subject
-            msg.attach(MIMEText(body, "plain"))
+            if sender_email and sender_password:
+                msg = MIMEMultipart()
+                msg["From"] = sender_email
+                msg["To"] = receiver
+                msg["Subject"] = subject
+                msg.attach(MIMEText(body, "plain"))
 
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
-                server.login(sender_email, sender_password)
-                server.send_message(msg)
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+                    server.login(sender_email, sender_password)
+                    server.send_message(msg)
 
-            print("✅ Email sent via SMTP")
-            return True
-
-    except Exception as e:
-        print("⚠ SMTP failed:", e)
+                print("✅ Email sent via SMTP (local)")
+                return True
+        except Exception as e:
+            print("❌ Local SMTP failed:", e)
 
     # =======================
-    # 2️⃣ FALLBACK → SENDGRID
+    # RENDER → SENDGRID ONLY
     # =======================
     try:
+        import requests
+
         sg_key = os.environ.get("SENDGRID_API_KEY")
-
         if not sg_key:
             print("❌ SendGrid key missing")
             return False
@@ -252,7 +246,9 @@ Message:
                     "to": [{"email": receiver}],
                     "subject": subject
                 }],
-                "from": {"email": "dhananjaykothawale80@gmail.com"},
+                "from": {
+                    "email": os.environ.get("EMAIL_USER")  # MUST be verified
+                },
                 "content": [{
                     "type": "text/plain",
                     "value": body
