@@ -162,7 +162,7 @@ def seed_data():
             ('profile_linkedin', 'https://www.linkedin.com/in/dhananjay-kothawale/'),
             ('profile_summary', 'Data Science undergraduate (UG\'26) with a strong foundation in data analysis, visualization, and machine learning. Proven experience delivering defence-oriented Power BI dashboards with focus on KPIs, decision-support systems, and data integrity. Passionate about transforming complex data into actionable business insights.'),
             ('resume_path', 'uploads/resume.pdf'),
-            ('profile_image', 'uploads/profile.jpg')
+            ('profile_image', 'uploads/profile.jpeg')
         ]
         c.executemany("INSERT INTO settings (key, value) VALUES (?, ?)", settings_data)
     
